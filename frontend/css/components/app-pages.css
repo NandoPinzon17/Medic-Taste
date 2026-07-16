@@ -525,6 +525,53 @@
 .planner-header h1 { font-size: 28px; margin-bottom: 6px; }
 .planner-header p { color: var(--text-secondary); font-size: 14px; }
 
+.planner-week-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+.week-indicator-dots {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.week-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  color: var(--text-muted);
+  transition: all var(--transition);
+  cursor: default;
+}
+.week-dot.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0,137,123,0.3);
+  transform: scale(1.1);
+}
+.week-dot.past {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.week-indicator-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .planner-nav {
   display: flex;
   align-items: center;
@@ -1103,10 +1150,74 @@
   .questionnaire-card { padding: 24px; }
   .planner-week { flex-direction: column; }
   .planner-day { flex: none; min-width: 0; }
-  .recipes-grid { grid-template-columns: 1fr; }
+  .recipes-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .recipe-detail-card { padding: 20px; }
   .recipe-detail-image { height: 160px; }
   .ingredient-tooltip { width: 80px; height: 80px; }
   .questionnaire-actions { flex-direction: column; }
   .questionnaire-actions .btn { width: 100%; }
+
+  .recipes-header { flex-direction: column; align-items: stretch; }
+  .recipes-header h1 { font-size: 24px; }
+  .recipes-search { flex-direction: column; }
+  .recipes-search input { min-width: 0; width: 100%; }
+  .recipes-search select { width: 100%; }
+
+  .planner-header h1 { font-size: 24px; }
+  .planner-nav { flex-wrap: wrap; gap: 8px; }
+  .planner-nav span { min-width: 140px; font-size: 14px; }
+  .planner-day { min-width: 0; padding: 12px; }
+  .planner-modal { padding: 20px; }
+
+  .recipe-detail-overlay { padding: 12px; }
+  .recipe-detail-card { max-height: 85vh; border-radius: var(--radius-lg); }
+  .recipe-detail-header h2 { font-size: 20px; }
+  .recipe-detail-meta { font-size: 12px; gap: 10px; }
+  .recipe-detail-steps li { padding: 12px 12px 12px 44px; font-size: 13px; }
+  .recipe-detail-steps li::before { width: 24px; height: 24px; font-size: 11px; left: 10px; }
+  .recipe-detail-add { flex-direction: column; }
+  .recipe-detail-add .btn { width: 100%; }
+
+  .favorites-header h1 { font-size: 24px; }
+  .favorites-empty { padding: 48px 16px; }
+  .favorites-empty .icon { font-size: 40px; }
+
+  .shopping-header h1 { font-size: 24px; }
+  .shopping-actions { flex-wrap: wrap; }
+  .shopping-summary { flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px 14px; }
+  .shopping-item { padding: 8px 10px; }
+  .shopping-item label { font-size: 13px; }
+
+  .profile-header h1 { font-size: 24px; }
+  .profile-avatar-section { flex-direction: column; text-align: center; gap: 14px; }
+  .profile-card { padding: 20px; max-width: 100%; }
+  .profile-actions { flex-direction: column; }
+  .profile-actions .btn { width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .questionnaire-card { padding: 18px; border-radius: var(--radius-lg); }
+  .questionnaire-card h1 { font-size: 22px; }
+  .questionnaire-step h2 { font-size: 18px; }
+  .questionnaire-option { padding: 12px 14px; gap: 10px; }
+
+  .recipes-grid { gap: 14px; }
+  .recipe-card-full-image { height: 160px; }
+  .recipe-card-full-body { padding: 14px; }
+  .recipe-card-full-body h3 { font-size: 14px; }
+  .recipe-card-full-meta { gap: 10px; font-size: 11px; }
+
+  .planner-nav span { min-width: 100px; font-size: 13px; }
+  .planner-day-header { font-size: 11px; }
+  .planner-meal { padding: 6px 8px; font-size: 10px; }
+
+  .recipe-detail-card { padding: 16px; }
+  .recipe-detail-header h2 { font-size: 18px; }
+  .recipe-detail-section ul li { padding: 8px 10px; font-size: 13px; }
+
+  .shopping-item-amount { min-width: 40px; font-size: 11px; }
+  .shopping-item-price { min-width: 40px; font-size: 11px; }
+
+  .profile-avatar { width: 72px; height: 72px; font-size: 24px; }
+  .profile-card-field p { font-size: 14px; }
 }

@@ -103,3 +103,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+.dark .footer { background: #0A0F0D; }
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .footer { background: #0A0F0D; }
+}

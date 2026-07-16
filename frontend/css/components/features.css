@@ -216,3 +216,11 @@
     grid-template-columns: 1fr;
   }
 }
+
+.dark .feature-card { background: var(--surface); border-color: var(--border); }
+.dark .cta-section .btn { background: var(--primary); color: #fff; border-color: var(--primary); }
+.dark .cta-section .btn:hover { background: transparent; color: var(--primary); }
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .feature-card { background: var(--surface); border-color: var(--border); }
+  :root:not(.light) .cta-section .btn { background: var(--primary); color: #fff; }
+}

@@ -36,6 +36,36 @@ sidebarToggle.addEventListener('click', () => {
   sidebarToggle.textContent = sidebar.classList.contains('collapsed') ? '▶' : '◀';
 });
 
+// Dark mode toggle
+const darkToggle = document.getElementById('darkToggle');
+const darkLabel = document.getElementById('darkLabel');
+const savedTheme = localStorage.getItem('tf_theme');
+
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.classList.add('dark');
+    document.documentElement.classList.remove('light');
+    darkLabel.textContent = 'Modo claro';
+  } else if (theme === 'light') {
+    document.documentElement.classList.add('light');
+    document.documentElement.classList.remove('dark');
+    darkLabel.textContent = 'Modo oscuro';
+  } else {
+    document.documentElement.classList.remove('dark', 'light');
+    darkLabel.textContent = 'Modo oscuro';
+  }
+}
+
+applyTheme(savedTheme || 'auto');
+
+darkToggle.addEventListener('click', () => {
+  const isDark = document.documentElement.classList.contains('dark') ||
+    (!document.documentElement.classList.contains('light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const next = isDark ? 'light' : 'dark';
+  localStorage.setItem('tf_theme', next);
+  applyTheme(next);
+});
+
 function updateSidebarUser(user) {
   userName.textContent = user.name || 'Usuario';
   userEmail.textContent = user.email || '';

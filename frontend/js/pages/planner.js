@@ -1,5 +1,6 @@
 import { get } from '../services/api.js';
 import { logUsage } from '../services/usage.js';
+import { showToast } from '../utils/toast.js';
 
 const MEAL_ICONS = {
   desayuno: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>',
@@ -43,6 +44,7 @@ export function renderPlanner(container) {
       </button>
     </div>
 
+    <div class="planner-week-indicator" id="weekIndicator"></div>
     <div class="planner-summary" id="plannerSummary"></div>
 
     <div id="plannerAnimWrap">
@@ -60,6 +62,44 @@ export function renderPlanner(container) {
   `;
 
   let currentMonday = monday;
+
+  function getWeekNumber(date) {
+    const planStart = getPlanStartDate();
+    const diffDays = Math.floor((date - planStart) / 86400000);
+    return Math.floor(diffDays / 7) + 1;
+  }
+
+  function getPlanStartDate() {
+    const saved = JSON.parse(localStorage.getItem('tf_week_plan') || '{}');
+    const dates = Object.keys(saved).sort();
+    if (dates.length) {
+      const first = new Date(dates[0] + 'T12:00:00');
+      return getMonday(first);
+    }
+    return getMonday(new Date());
+  }
+
+  function updateWeekIndicator() {
+    const el = document.getElementById('weekIndicator');
+    const planStart = getPlanStartDate();
+    const totalWeeks = 4;
+    const currentWeekNum = getWeekNumber(currentMonday);
+    const isCurrentWeek = currentMonday.toDateString() === monday.toDateString();
+
+    let html = '<div class="week-indicator-dots">';
+    for (let w = 1; w <= totalWeeks; w++) {
+      const weekDate = new Date(planStart);
+      weekDate.setDate(planStart.getDate() + (w - 1) * 7);
+      const isViewing = w === currentWeekNum;
+      const isPast = weekDate < monday && !isCurrentWeek;
+      html += `<div class="week-dot ${isViewing ? 'active' : ''} ${isPast ? 'past' : ''}" title="Semana ${w}">
+        <span>${w}</span>
+      </div>`;
+    }
+    html += '</div>';
+    html += `<div class="week-indicator-label">Semana ${Math.min(currentWeekNum, totalWeeks)} de ${totalWeeks}</div>`;
+    el.innerHTML = html;
+  }
 
   function buildWeekHTML() {
     const saved = JSON.parse(localStorage.getItem('tf_week_plan') || '{}');
@@ -125,10 +165,7 @@ export function renderPlanner(container) {
           logUsage('recipe_viewed', recipeId);
           showRecipeDetail(recipe, true);
         } catch {
-          const recipeName = el.dataset.recipe;
-          if (confirm(`¿Eliminar "${recipeName}" de ${formatDateShort(new Date(dateStr + 'T12:00:00'))}?`)) {
-            removeMeal(el.dataset.date, parseInt(el.dataset.idx));
-          }
+          showToast('No se pudo cargar la receta', 'info');
         }
       });
     });
@@ -285,6 +322,7 @@ export function renderPlanner(container) {
       const slideIn = direction === 'next' ? 'slideInRight' : 'slideInLeft';
       animWrap.style.animation = `${slideIn} 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards`;
       updateSummary(totalMeals, totalDays, mealTypeCounts);
+      updateWeekIndicator();
       attachWeekEvents();
       document.getElementById('prevWeek').disabled = false;
       document.getElementById('nextWeek').disabled = false;
@@ -301,6 +339,7 @@ export function renderPlanner(container) {
       weekEl.innerHTML = html;
       animWrap.style.animation = 'fadeIn 0.3s ease';
       updateSummary(totalMeals, totalDays, mealTypeCounts);
+      updateWeekIndicator();
       attachWeekEvents();
     }
   }
@@ -427,9 +466,9 @@ export function renderPlanner(container) {
         }
       }
       logUsage('plan_saved');
-      alert('✅ Plan guardado exitosamente');
+      showToast('Plan guardado exitosamente!', 'success');
     } catch {
-      alert('Error al guardar el plan. Verifica que el backend esté corriendo.');
+      showToast('Error al guardar el plan. Verifica que el backend este corriendo.', 'info');
     }
   });
 

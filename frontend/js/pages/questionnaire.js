@@ -248,7 +248,7 @@ async function generatePlan(container) {
 
     const params = new URLSearchParams();
     if (diet && diet !== 'omnivore') params.set('diet', diet);
-    params.set('limit', '50');
+    params.set('limit', '100');
 
     const recipes = await get(`/recipes?${params}`);
 
@@ -262,36 +262,97 @@ async function generatePlan(container) {
       return true;
     });
 
-    const shuffled = [...filtered].sort(() => Math.random() - 0.5);
-    const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-    const mealTypes = ['desayuno', 'almuerzo', 'cena'];
-    if (mealsCount >= 4) mealTypes.push('snack');
-    if (mealsCount >= 5) mealTypes.push('snack');
+    const breakfastRecipes = filtered.filter(r => {
+      const name = r.name.toLowerCase();
+      return name.includes('batido') || name.includes('avena') || name.includes('huevo') || 
+             name.includes('smoothie') || name.includes('panqueque') || name.includes('tostada') || 
+             name.includes('yogur') || name.includes('frutas') || name.includes('tortilla') ||
+             name.includes('bowl de') || name.includes('revuelto');
+    });
+    const lunchRecipes = filtered.filter(r => {
+      const name = r.name.toLowerCase();
+      return name.includes('pollo') || name.includes('pasta') || name.includes('ensalada') || 
+             name.includes('bowl') || name.includes('tacos') || name.includes('salmón') || 
+             name.includes('garbanzo') || name.includes('quinoa') || name.includes('arroz') ||
+             name.includes('lentejas') || name.includes('teriyaki') || name.includes('curry');
+    });
+    const dinnerRecipes = filtered.filter(r => {
+      const name = r.name.toLowerCase();
+      return name.includes('sopa') || name.includes('merluza') || name.includes('crema') || 
+             name.includes('revuelto') || name.includes('pescado') || name.includes('pechuga') ||
+             name.includes('calabacín') || name.includes('champiñón') || name.includes('marinara') ||
+             name.includes('merluza');
+    });
+    const snackRecipes = filtered.filter(r => {
+      const name = r.name.toLowerCase();
+      return name.includes('hummus') || name.includes('energizante') || name.includes('edamame') || 
+             name.includes('batido verde') || name.includes('frutos secos') || name.includes('ricotta') ||
+             name.includes('batido de') || name.includes('manzana');
+    });
+
+    const getRecipesForType = (type) => {
+      let pool;
+      switch(type) {
+        case 'desayuno': pool = breakfastRecipes.length ? breakfastRecipes : filtered; break;
+        case 'almuerzo': pool = lunchRecipes.length ? lunchRecipes : filtered; break;
+        case 'cena': pool = dinnerRecipes.length ? dinnerRecipes : filtered; break;
+        case 'snack': pool = snackRecipes.length ? snackRecipes : filtered; break;
+        default: pool = filtered;
+      }
+      return [...pool].sort(() => Math.random() - 0.5);
+    };
 
     const weekPlan = {};
-    let recipeIndex = 0;
     const today = new Date();
     const monday = new Date(today);
     monday.setDate(today.getDate() - today.getDay() + 1);
 
-    for (let d = 0; d < 7; d++) {
-      const date = new Date(monday);
-      date.setDate(monday.getDate() + d);
-      const dateStr = date.toISOString().split('T')[0];
-      const dayMeals = [];
+    const NUM_WEEKS = 4;
 
-      for (const mealType of [...new Set(mealTypes)]) {
-        const recipe = shuffled[recipeIndex % shuffled.length];
-        recipeIndex++;
-        dayMeals.push({
-          recipe_id: recipe.id,
-          recipe_name: recipe.name,
-          meal_type: mealType,
-          plan_date: dateStr,
-          photo_url: recipe.photo_url,
-        });
+    for (let w = 0; w < NUM_WEEKS; w++) {
+      const weekMonday = new Date(monday);
+      weekMonday.setDate(monday.getDate() + (w * 7));
+
+      const usedRecipesWeek = new Set();
+
+      for (let d = 0; d < 7; d++) {
+        const date = new Date(weekMonday);
+        date.setDate(weekMonday.getDate() + d);
+        const dateStr = date.toISOString().split('T')[0];
+
+        let dayMealsCount;
+        if (d < 5) {
+          dayMealsCount = mealsCount + (Math.random() > 0.5 ? 1 : 0);
+        } else {
+          dayMealsCount = mealsCount - (Math.random() > 0.7 ? 1 : 0);
+        }
+        dayMealsCount = Math.max(3, Math.min(5, dayMealsCount));
+
+        const mealTypes = ['desayuno', 'almuerzo', 'cena'];
+        if (dayMealsCount >= 4) mealTypes.push('snack');
+        if (dayMealsCount >= 5) mealTypes.push('snack');
+
+        const dayMeals = [];
+
+        for (const mealType of mealTypes) {
+          const pool = getRecipesForType(mealType);
+          let recipe = pool.find(r => !usedRecipesWeek.has(r.id));
+          if (!recipe) {
+            usedRecipesWeek.clear();
+            recipe = pool.find(r => !usedRecipesWeek.has(r.id)) || pool[Math.floor(Math.random() * pool.length)];
+          }
+          usedRecipesWeek.add(recipe.id);
+
+          dayMeals.push({
+            recipe_id: recipe.id,
+            recipe_name: recipe.name,
+            meal_type: mealType,
+            plan_date: dateStr,
+            photo_url: recipe.photo_url,
+          });
+        }
+        weekPlan[dateStr] = dayMeals;
       }
-      weekPlan[dateStr] = dayMeals;
     }
 
     localStorage.setItem('tf_week_plan', JSON.stringify(weekPlan));
@@ -303,7 +364,7 @@ async function generatePlan(container) {
         <div class="questionnaire-card" style="text-align:center;animation:bounceIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards">
           <div style="font-size:4rem;margin-bottom:1rem;animation:bounceIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards">🎉</div>
           <h1 style="-webkit-text-fill-color:initial;background:none">¡Plan generado!</h1>
-          <p>Hemos creado un menú semanal personalizado para ti basado en tus preferencias.</p>
+          <p>Hemos creado 4 semanas de menús personalizados para ti, con ${mealsCount} comidas diarias variadas.</p>
           <div style="margin-top:2rem;display:flex;flex-direction:column;gap:0.75rem;align-items:center">
             <button class="btn btn-primary btn-lg" id="goToPlannerBtn" style="animation:pulse 2s ease infinite">Ver mi plan semanal</button>
             <button class="btn btn-outline" id="goToDashboardBtn">Ir al Dashboard</button>

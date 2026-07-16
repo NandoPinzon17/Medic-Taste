@@ -1,9 +1,55 @@
 import { get } from '../services/api.js';
 import { getUser } from '../services/authService.js';
+import { showToast } from '../utils/toast.js';
+
+function calculateStreak() {
+  const plan = JSON.parse(localStorage.getItem('tf_week_plan') || '{}');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let streak = 0;
+  let checkDate = new Date(today);
+
+  while (true) {
+    const dateStr = checkDate.toISOString().split('T')[0];
+    const meals = plan[dateStr];
+    if (meals && meals.length >= 2) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+function getStreakMessage(streak) {
+  const pool = {
+    0: ['Planifica tus comidas para hoy!', 'Tu cuerpo merece lo mejor hoy'],
+    1: ['Primer dia! El mejor momento para empezar fue ayer, el segundo es hoy', 'Bien empezado! Cada paso cuenta'],
+    2: ['2 dias seguidos! Tu yo del futuro te lo va a agradecer', 'Dos dias seguidos, el habito esta naciendo'],
+    3: ['3 dias! Ya estas en racha, no pares', 'Tres dias seguidos, tu disciplina brilla'],
+    4: ['4 dias! La constancia es tu superpoder', 'Cuatro dias! Ya vas por buen camino'],
+    5: ['5 dias! Eres una maquina de salud', 'Una semana casi completa, sigue asi!'],
+    6: ['6 dias! Un dia mas y cierras la semana', 'Casi una semana entera, increible!'],
+    7: ['Una semana entera! Eres una leyenda', '7 dias seguidos! Tu cuerpo te esta felicitando'],
+    8: ['8 dias! Ya superaste a la mayoria', 'Segunda semana, misma energia!'],
+    10: ['10 dias! Tu disciplina es inspiradora', 'Dos digitos! Eres imparable'],
+    14: ['2 semanas! Lifestyle confirmado', '14 dias! Ya es parte de tu identidad'],
+    21: ['3 semanas! Esto ya es tu estilo de vida', '21 dias formaron un habito, lo lograste'],
+    30: ['Un mes entero! Eres una inspiracion', '30 dias! Tu dedicacion no tiene limites'],
+  };
+  let range = 0;
+  for (const key of Object.keys(pool).map(Number).sort((a, b) => a - b)) {
+    if (streak >= key) range = key;
+  }
+  const options = pool[range];
+  return options[Math.floor(Math.random() * options.length)];
+}
 
 export async function renderDashboard(container) {
   const user = getUser();
   const firstName = user?.name?.split(' ')[0] || 'Usuario';
+  const streak = calculateStreak();
 
   container.innerHTML = `
     <div class="dashboard-banner">
@@ -14,13 +60,26 @@ export async function renderDashboard(container) {
       </div>
     </div>
 
+    ${streak > 0 ? `
+    <div class="streak-bar">
+      <div class="streak-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+      </div>
+      <div style="flex:1">
+        <div class="streak-text-title">${streak} ${streak === 1 ? 'dia' : 'dias'} seguido${streak > 1 ? 's' : ''}</div>
+        <div class="streak-text-msg">${getStreakMessage(streak)}</div>
+      </div>
+      <div class="streak-fire">${streak}🔥</div>
+    </div>
+    ` : ''}
+
     <div class="stats-row" id="statsRow"></div>
 
     <div class="quick-access">
       <h2>Acceso rápido</h2>
       <div class="quick-access-grid">
         <a href="#planner" class="quick-card" data-page="planner">
-          <div class="quick-card-icon" style="background:#E0F2F1;color:#00897B">
+          <div class="quick-card-icon qc-planner">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -33,7 +92,7 @@ export async function renderDashboard(container) {
           <span>Planificador <small>Organiza tu semana</small></span>
         </a>
         <a href="#favorites" class="quick-card" data-page="favorites">
-          <div class="quick-card-icon" style="background:#FFEBEE;color:#DC2626">
+          <div class="quick-card-icon qc-favs">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
             </svg>
@@ -41,7 +100,7 @@ export async function renderDashboard(container) {
           <span>Favoritos <small>Tus recetas guardadas</small></span>
         </a>
         <a href="#shopping" class="quick-card" data-page="shopping">
-          <div class="quick-card-icon" style="background:#FFF8E1;color:#F59E0B">
+          <div class="quick-card-icon qc-shop">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
               <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -51,7 +110,7 @@ export async function renderDashboard(container) {
           <span>Lista de compras <small>Tus ingredientes</small></span>
         </a>
         <a href="#profile" class="quick-card" data-page="profile">
-          <div class="quick-card-icon" style="background:#E3F2FD;color:#1565C0">
+          <div class="quick-card-icon qc-profile">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
@@ -66,7 +125,7 @@ export async function renderDashboard(container) {
       <div class="dashboard-card">
         <div class="dashboard-card-header">
           <h3>Progreso semanal</h3>
-          <span class="tag tag-primary" style="font-size:0.72rem">7 días</span>
+          <span class="tag tag-primary" style="font-size:0.72rem">7 dias</span>
         </div>
         <div class="dashboard-card-body">
           <div class="progress-chart">
@@ -88,7 +147,7 @@ export async function renderDashboard(container) {
     </div>
 
     <div class="section-label">
-      Recetas más vistas
+      Recetas mas vistas
       <a href="#recipes">Ver todas</a>
     </div>
     <div class="recipe-mini-list" id="recipeList"></div>
@@ -99,6 +158,23 @@ export async function renderDashboard(container) {
   loadTodayMeals();
   loadRanking();
   setTimeout(() => { drawChart(); setupChartClick(document.getElementById('progressChart')); }, 100);
+
+  if (streak >= 3) {
+    const streakToasts = [
+      `${streak} dias seguidos! Tu disciplina es inspiradora`,
+      `Llevas ${streak} dias! Sigue asi, lo estas logrando`,
+      `${streak} dias de racha! Tu cuerpo te lo esta agradeciendo`,
+      `Wow! ${streak} dias seguidos, eres una maquina`,
+    ];
+    setTimeout(() => showToast(streakToasts[Math.floor(Math.random() * streakToasts.length)], 'streak'), 1500);
+  } else if (streak === 0) {
+    const zeroToasts = [
+      'Planifica tus comidas de hoy para empezar tu racha!',
+      'Hoy es el dia perfecto para empezar tu racha',
+      'Empieza tu racha hoy, tu cuerpo te lo merece',
+    ];
+    setTimeout(() => showToast(zeroToasts[Math.floor(Math.random() * zeroToasts.length)], 'info'), 2000);
+  }
 
   container.querySelectorAll('.quick-card').forEach(card => {
     card.addEventListener('click', (e) => {

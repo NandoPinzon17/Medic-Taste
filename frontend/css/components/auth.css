@@ -318,3 +318,11 @@
     transition: none;
   }
 }
+
+.dark .auth-page { background: linear-gradient(160deg, #0F1714 0%, #141E1A 55%, #1A2823 100%); }
+.dark .auth-container { background: var(--surface); }
+.dark .auth-form input { background: #1A2823; border-color: var(--border); color: var(--text); }
+.dark .auth-toggle { border-color: var(--border); color: var(--text); }
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .auth-page { background: linear-gradient(160deg, #0F1714 0%, #141E1A 55%, #1A2823 100%); }
+}

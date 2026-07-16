@@ -115,6 +115,14 @@
     <p class="auth-mobile-switch" data-mobile="register-hint">¿Ya tienes cuenta? <a data-switch="login">Inicia sesión</a></p>
   </div>
 
+  <script>
+    (function() {
+      var saved = localStorage.getItem('tf_theme');
+      if (saved === 'dark') document.documentElement.classList.add('dark');
+      else if (saved === 'light') document.documentElement.classList.add('light');
+      else if (window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
+    })();
+  </script>
   <script type="module" src="js/pages/auth.js"></script>
 </body>
 </html>
